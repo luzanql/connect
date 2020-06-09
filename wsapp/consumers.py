@@ -18,13 +18,11 @@ class MoveConsumer(WebsocketConsumer):
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        print(text_data_json)
+
         row         = int(text_data_json['row']) - 1
         side        = text_data_json['side']
         is_x_player = bool(text_data_json['xIsPlayer'])
         column      = self.game.getYCoordinate(row, side)
-        print(self.game.getBoardState())
-        print(column)
         move        = Move(x=row, y=column, is_x_player= is_x_player, game=self.game)
         move.save()
         self.game.validateGame()

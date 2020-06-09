@@ -56,7 +56,7 @@ class Board extends React.Component {
         client.onmessage = (message) => {
             const data = JSON.parse(message.data);
             console.log(data);
-            if (!data.gameOver) {
+            if (!this.state.gameOver) {
                 this.makeMove(data.row, data.column, data.xIsNext, data.winner, data.gameOver);
             }
         };
@@ -113,7 +113,7 @@ class Board extends React.Component {
 
     render() {
         let status;
-        if (this.state.winner) {
+        if (this.state.winner !== '') {
             status = 'Winner: ' + this.state.winner;
         } else {
             status = 'Next Player: ' + (this.state.xIsNext ? 'X' : 'O')
