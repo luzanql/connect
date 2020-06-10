@@ -11,7 +11,7 @@ class Group(models.Model):
 
 class Channel(models.Model):
     group       = models.ForeignKey(Group, on_delete=models.CASCADE,  null=True)
-    name        = models.CharField(max_length=1)
+    name        = models.CharField(max_length=200)
     is_x_player = models.BooleanField(default=True)
 
 
@@ -28,6 +28,9 @@ class Game(models.Model):
             board[move.x][move.y] = FIRST_PLAYER_MOVE if move.is_x_player else SECOND_PLAYER_MOVE
         return board
 
+    """
+        Given x and Side, get Y
+    """
     def getYCoordinate(self, xMove, side):
         board = self.getBoardState()
         for x, row in enumerate(board):
@@ -47,7 +50,7 @@ class Game(models.Model):
         return a is not None and a == b and a == c and a == d
 
     """
-    Validate Game Recorriendo si se repite x o y en diagonal, actualizar ganador, game over y status
+    Validate Winner connect-4 rows, columns, slash
     """
     def validateGame(self):
         board = self.getBoardState()

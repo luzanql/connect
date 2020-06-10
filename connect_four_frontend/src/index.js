@@ -6,14 +6,14 @@ var client = null;
 
 function Square(props) {
     return (
-        <div className="square">
+        <div className="col-1 square">
             {props.value}
         </div>
     );
 }
 
 function Row(props) {
-    return <div>
+    return <div className="row">
     {[...Array(props.squares.length)].map((x, j) =>
         <Square key={j} value={props.squares[j]}></Square>
         )}
@@ -102,45 +102,40 @@ class Board extends React.Component {
     render() {
         let status;
         if (this.state.winner !== '') {
-            status = <label className="custom-label"> Winner:   {this.state.winner}</label>
+            status = <label className="custom-label"> Winner: {this.state.winner}</label>
         } else {
-            status = <label className="custom-label">  Next Player:  {this.state.xIsNext ? 'X' : 'O'}</label>
+            status = <label className="custom-label"> Next Player: {this.state.xIsNext ? 'X' : 'O'}</label>
         }
         return(
-            <div>
+            <div className="container">
+                <div className="status"><label className="custom-label"> You are: {this.player} </label> </div>
                 <div className="status">{status}</div>
                 <div className="row">
-                    <div className="col-12">{this.renderBoard()}</div>
+                    <div className="col-xs-12 col-sm-12 col-md-6 col-lg-6">{this.renderBoard()}</div>
+
                 </div>
                 <div className="row">
-                    <div className="col-2">
-                    </div>
-
-                    <div className="col-2">
-                        <label className="custom-label">Row:</label>
-                        <input type="text" className="form-control" onChange={this.handleXChange}/>
-                    </div>
-
-                    <div className="col-3">
-                        <label className="custom-label">   Side: </label>
-                        <div>
-                            <input type="radio"  value="R" name="side" onChange={this.handleRadioButtonSide}/> Right
+                    <div className="col-lg-6 col-md-6 col-xs-12">
+                        <div className="row">
+                            <div className="col-2"><span className="my-span">Row:</span>
+                                <input type="text" className="form-control" onChange={this.handleXChange}/>
+                            </div>
+                            <div className="col-2">
+                                <span className="my-span">Left:</span>
+                                <input type="radio" value="L" name="side"  onChange={this.handleRadioButtonSide}/>
+                            </div>
+                            <div className="col-2">
+                                <span className="my-span">Right:</span>
+                                <input type="radio"  value="R" name="side" onChange={this.handleRadioButtonSide}/>
+                            </div>
                         </div>
                     </div>
-                    <div className="col-3">
-                        < label className="custom-label"> </label>
-                        <input type="radio" value="L" name="side"  onChange={this.handleRadioButtonSide}/> Left
-                    </div>
-                    <div className="col-4">
-                    </div>
                 </div>
                 <div className="row">
-                    <div className="col-4"></div>
-                    <div className="col-6">
-                        <button className="btn btn-primary custom-btn" onClick={this.handleMove} >Make move </button>
-                    </div>
-                    <div className="col-4"></div>
+                <div className="col-12">
+                    <button className="btn btn-primary custom-btn" onClick={this.handleMove} >Make move </button>
                 </div>
+            </div>
             </div>
         )
     }
@@ -153,15 +148,21 @@ class Game extends React.Component {
         this.state = {
             player: '',
             displayBoard: false,
-            diplayRoomInfo: true
+            diplayRoomInfo: true,
+            roomName: ''
         };
         this.connectSocket = this.connectSocket.bind(this);
         this.handleRadioButtonPlayer = this.handleRadioButtonPlayer.bind(this);
         this.handleEnterGame = this.handleEnterGame.bind(this);
+        this.handleRoomName = this.handleRoomName.bind(this);
     }
 
     handleRadioButtonPlayer(event) {
         this.setState({player: event.target.value});
+    }
+
+    handleRoomName(event) {
+        this.setState({roomName: event.target.value});
     }
 
 
@@ -178,14 +179,17 @@ class Game extends React.Component {
 
     handleEnterGame(event) {
 
-        client = new WebSocket(
-            'ws://'
-            +  '127.0.0.1:8000'
-            + '/ws/connect_four/'
-            +  this.state.player
-            + '/');
+        if (this.state.roomName &&  this.state.player) {
+            client = new WebSocket(
+                'ws://'
+                +  '127.0.0.1:8000'
+                + '/ws/connect_four/'
+                + this.state.roomName + '/'
+                + this.state.player
+                + '/');
 
-        this.connectSocket();
+            this.connectSocket();
+        }
     }
     render() {
         let board;
@@ -200,7 +204,7 @@ class Game extends React.Component {
                                     <label className="custom-label">Room Name:</label>
                                 </div>
                                 <div className="col-4 input-group">
-                                    <input className="form-control" />
+                                    <input className="form-control" onChange={this.handleRoomName} />
                                 </div>
                             </div>
                             <div className="row">
@@ -226,6 +230,10 @@ class Game extends React.Component {
         }
     return (
         <div className="container">
+
+            <div className="row">
+                <h1> Connect-Four</h1>
+            </div>
             <div>
                 <div className="row">
                     {roomInfo}

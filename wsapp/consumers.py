@@ -2,6 +2,8 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Game, Move, Group, Channel
+from django.db import IntegrityError
+
 
 FIRST_PLAYER = 'X'
 SECOND_PLAYER = 'O'
@@ -18,7 +20,7 @@ class MoveConsumer(WebsocketConsumer):
         )
 
         try:
-            #validate player
+            # Validate player
             if self.player != FIRST_PLAYER and self.player != SECOND_PLAYER:
                 print("Player not allowed")
                 self.close()
@@ -85,24 +87,28 @@ class MoveConsumer(WebsocketConsumer):
             }
         )
 
-    # Receive message from room group
+    # Receive movement from room group
     def game_move(self, event):
         text_data_json = event['message']
-        print(text_data_json)
-        row         = int(text_data_json['row']) - 1
-        side        = text_data_json['side']
-        is_x_player = bool(text_data_json['xIsPlayer'])
-        column      = self.game.getYCoordinate(row, side)
-        move        = Move(x=row, y=column, is_x_player= is_x_player, game=self.game)
-        move.save()
-        self.game.validateGame()
+        try:
+            row         = int(text_data_json['row']) - 1
+            side        = text_data_json['side']
+            is_x_player = bool(text_data_json['xIsPlayer'])
+            column      = self.game.getYCoordinate(row, side)
+            move        = Move(x=row, y=column, is_x_player= is_x_player, game=self.game)
+            move.save()
+            self.game.validateGame()
+            self.send(text_data=json.dumps({
+                'row'      : row,
+                'column'   : column,
+                'xIsNext'  : not is_x_player,
+                'winner'   : self.game.winner,
+                'gameOver' : self.game.game_over
+            }))
+        except (ValueError, IntegrityError):
+            print('Missing or Wrong data for movement')
 
 
-        self.send(text_data=json.dumps({
-            'row'      : row,
-            'column'   : column,
-            'xIsNext'  : not is_x_player,
-            'winner'   : self.game.winner,
-            'gameOver' : self.game.game_over
-        }))
+
+
 

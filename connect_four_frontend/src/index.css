@@ -1,68 +1,51 @@
 body {
     font: 14px "Century Gothic", Futura, sans-serif;
-    margin: 20px;
+    background-color: #FBFBFB;
   }
-  
-  ol, ul {
-    padding-left: 30px;
-  }
-  
-  .board-row:after {
-    clear: both;
-    content: "";
-    display: table;
-  }
-  
+
   .status {
     margin-bottom: 10px;
   }
-  
+
   .square {
-    background: #fff;
-    border: 2px solid #999;
+    background: ivory;
+    border: 1px solid #999;
     float: left;
     font-size: 24px;
     font-weight: bold;
     line-height: 34px;
-    height: 54px;
-    width: 54px;
+    height: 2em;
+    width: 10%;
     text-align: center;
   }
-  
-  .square:focus {
-    outline: none;
-  }
-  
-  .kbd-navigation .square:focus {
-    background: #ddd;
-  }
-  
+
 
   .custom-label {
-
     display: block;
     width: 100%;
-    height: calc(1.5em + .75rem + 2px);
     font-size: 1rem;
     font-weight: bolder;
     border-radius: .25rem;
     margin-top: 1em;
-
-
   }
 
 .custom-btn{
   margin-top: 10px;
 }
 
-
 .player-label {
-
   display: block;
   width: 100%;
   font-size: 1rem;
   font-weight: bolder;
   margin-right: 1em;
+}
 
-
+.my-span {
+  display: block;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: bolder;
+  margin-right: 1em;
+  margin-top: 1em;
 }
