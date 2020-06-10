@@ -5,10 +5,21 @@ FIRST_PLAYER_MOVE = 'X'
 SECOND_PLAYER_MOVE = 'O'
 BOARD_SIZE = 7
 
+class Group(models.Model):
+    name = models.CharField(max_length=200)
+    active = models.BooleanField()
+
+class Channel(models.Model):
+    group       = models.ForeignKey(Group, on_delete=models.CASCADE,  null=True)
+    name        = models.CharField(max_length=1)
+    is_x_player = models.BooleanField(default=True)
+
+
 class Game(models.Model):
     start_time = models.DateTimeField(auto_now_add=True)
     game_over =  models.BooleanField(default=False)
     winner = models.CharField(max_length=1)
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL,  null=True)
 
 
     def getBoardState(self):
@@ -56,7 +67,7 @@ class Game(models.Model):
                     self.game_over = True
                     self.save()
                     return
-        # Diagonal right validation
+        # Diagonal left validation
         for j in range(3):
             for i in range(4):
                 if self.validateLine(board[i][j], board[i+1][j+1], board[i+2][j+2], board[i+3][j+3]):
@@ -65,9 +76,9 @@ class Game(models.Model):
                     self.save()
                     return
 
-        # Diagonal left validation
+        # Diagonal right validation
         for j in range(4):
-            for i in range(3):
+            for i in range(3, 7):
                 if self.validateLine(board[i][j], board[i-1][j+1], board[i-2][j+2], board[i-3][j+3]):
                     self.winner = board[i][j]
                     self.game_over = True
