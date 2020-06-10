@@ -2,13 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-
-const client = new WebSocket(
-    'ws://'
-    +  '127.0.0.1:8000'
-    + '/ws/connect_four/'
-    + 'playnow'
-    + '/');
+var client = null;
 
 function Square(props) {
     return (
@@ -35,35 +29,23 @@ class Board extends React.Component {
             gameOver: false,
             winner: '',
             xMove: '',
-            side: ''
+            side: '',
         };
 
-        this.connectSocket = this.connectSocket.bind(this);
+        this.player = props.player;
         this.handleXChange = this.handleXChange.bind(this);
-        this.handleYChange = this.handleYChange.bind(this);
         this.handleMove = this.handleMove.bind(this);
+        this.handleRadioButtonSide = this.handleRadioButtonSide.bind(this);
     }
-
     componentWillMount() {
-        this.connectSocket();
-    }
-
-    connectSocket () {
-        client.onopen = () => {
-            console.log('WebSocket Client Connected');
-        };
-
-        client.onmessage = (message) => {
-            const data = JSON.parse(message.data);
-            console.log(data);
-            if (!this.state.gameOver) {
-                this.makeMove(data.row, data.column, data.xIsNext, data.winner, data.gameOver);
-            }
-        };
-
-        client.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-        };
+        if (client) {
+            client.onmessage = (message) => {
+                const data = JSON.parse(message.data);
+                if (!this.state.gameOver) {
+                    this.makeMove(data.row, data.column, data.xIsNext, data.winner, data.gameOver);
+                }
+            };
+        }
     }
 
     handleXChange(event) {
@@ -75,12 +57,18 @@ class Board extends React.Component {
     }
 
     handleMove(event) {
+        let currPlayer = this.state.xIsNext ? 'X' : 'O';
+        if (this.player === currPlayer) {
+            client.send(JSON.stringify({
+                'row': this.state.xMove,
+                'side': this.state.side,
+                'xIsPlayer': this.state.xIsNext
+            }));
+        }
+    }
 
-        client.send(JSON.stringify({
-            'row': this.state.xMove,
-            'side': this.state.side,
-            'xIsPlayer': this.state.xIsNext
-        }));
+    handleRadioButtonSide(event) {
+        this.setState({side: event.target.value});
     }
 
     makeMove(row, column, xIsNext, winner, gameOver) {
@@ -114,24 +102,44 @@ class Board extends React.Component {
     render() {
         let status;
         if (this.state.winner !== '') {
-            status = 'Winner: ' + this.state.winner;
+            status = <label className="custom-label"> Winner:   {this.state.winner}</label>
         } else {
-            status = 'Next Player: ' + (this.state.xIsNext ? 'X' : 'O')
+            status = <label className="custom-label">  Next Player:  {this.state.xIsNext ? 'X' : 'O'}</label>
         }
         return(
             <div>
                 <div className="status">{status}</div>
-                <div className="game">
-                    <div className="game-board">{this.renderBoard()}</div>
-                    <div className="game-info">
-                        <label>
-                            X:
-                            <input type="text" onChange={this.handleXChange}/>
-                            Side:
-                            <input type="text" onChange={this.handleYChange}/>
-                        </label>
-                        <button onClick={this.handleMove}  >Play </button>
+                <div className="row">
+                    <div className="col-12">{this.renderBoard()}</div>
+                </div>
+                <div className="row">
+                    <div className="col-2">
                     </div>
+
+                    <div className="col-2">
+                        <label className="custom-label">Row:</label>
+                        <input type="text" className="form-control" onChange={this.handleXChange}/>
+                    </div>
+
+                    <div className="col-3">
+                        <label className="custom-label">   Side: </label>
+                        <div>
+                            <input type="radio"  value="R" name="side" onChange={this.handleRadioButtonSide}/> Right
+                        </div>
+                    </div>
+                    <div className="col-3">
+                        < label className="custom-label"> </label>
+                        <input type="radio" value="L" name="side"  onChange={this.handleRadioButtonSide}/> Left
+                    </div>
+                    <div className="col-4">
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-4"></div>
+                    <div className="col-6">
+                        <button className="btn btn-primary custom-btn" onClick={this.handleMove} >Make move </button>
+                    </div>
+                    <div className="col-4"></div>
                 </div>
             </div>
         )
@@ -139,14 +147,93 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+
+    constructor (props){
+        super(props);
+        this.state = {
+            player: '',
+            displayBoard: false,
+            diplayRoomInfo: true
+        };
+        this.connectSocket = this.connectSocket.bind(this);
+        this.handleRadioButtonPlayer = this.handleRadioButtonPlayer.bind(this);
+        this.handleEnterGame = this.handleEnterGame.bind(this);
+    }
+
+    handleRadioButtonPlayer(event) {
+        this.setState({player: event.target.value});
+    }
+
+
+    connectSocket () {
+        client.onopen = () => {
+            this.setState({displayBoard: true, diplayRoomInfo: false});
+        };
+
+        client.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+    }
+
+
+    handleEnterGame(event) {
+
+        client = new WebSocket(
+            'ws://'
+            +  '127.0.0.1:8000'
+            + '/ws/connect_four/'
+            +  this.state.player
+            + '/');
+
+        this.connectSocket();
+    }
     render() {
+        let board;
+        if (this.state.displayBoard) {
+            board = <Board  player={this.state.player}/>;
+        }
+        let roomInfo;
+        if (this.state.diplayRoomInfo) {
+            roomInfo =  <div className="container">
+                            <div className="row">
+                                <div className="col-2">
+                                    <label className="custom-label">Room Name:</label>
+                                </div>
+                                <div className="col-4 input-group">
+                                    <input className="form-control" />
+                                </div>
+                            </div>
+                            <div className="row">
+                                <div className="col-2">
+                                    <label className="custom-label"> Player: </label>
+                                </div>
+                                <div className="col-2">
+                                    <label className="player-label" >X </label>
+                                    <input type="radio"  value="X" name="player" onChange={this.handleRadioButtonPlayer} />
+                                </div>
+                                <div className="col-2">
+                                    <label className="player-label">O</label>
+                                    <input type="radio" value="O" name="player"  onChange={this.handleRadioButtonPlayer}/>
+                                </div>
+                                <div className="col-8"></div>
+                            </div>
+                            <div className="row">
+                                <div className="col-12">
+                                    <button className="btn btn-primary" onClick={this.handleEnterGame} > Enter Game </button>
+                            </div>
+                        </div>
+                        </div>
+        }
     return (
-        <div >
+        <div className="container">
             <div>
-                <Board />
+                <div className="row">
+                    {roomInfo}
+                </div>
+            <div className="row">
+                {board}
             </div>
-        <div >
-        </div>
+            </div>
         </div>
     );
     }
@@ -158,3 +245,5 @@ ReactDOM.render(
     <Game />,
     document.getElementById('root')
 );
+
+
