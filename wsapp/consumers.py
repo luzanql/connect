@@ -8,7 +8,7 @@ SECOND_PLAYER = 'O'
 class MoveConsumer(WebsocketConsumer):
 
     def connect(self):
-        self.room_name = 'xcvfdsa'
+        self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'connect_four_%s' % self.room_name
         self.player = self.scope['url_route']['kwargs']['player']
         # Join room group
@@ -30,14 +30,13 @@ class MoveConsumer(WebsocketConsumer):
             channels_count = Channel.objects.filter(group=group).count()
 
             if channels_count > 1:
-                print('The room is ful')
+                print('The room is full')
                 self.close()
                 raise Exception
 
             if channels_count == 1:
                 # Validate if player is already connected
                 channel = Channel.objects.get(group=group)
-                print(channel.is_x_player)
                 if channel.is_x_player and is_x_player:
                     print(self.player + ' already connected')
                     self.close()
@@ -89,6 +88,7 @@ class MoveConsumer(WebsocketConsumer):
     # Receive message from room group
     def game_move(self, event):
         text_data_json = event['message']
+        print(text_data_json)
         row         = int(text_data_json['row']) - 1
         side        = text_data_json['side']
         is_x_player = bool(text_data_json['xIsPlayer'])
