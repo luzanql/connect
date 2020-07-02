@@ -5,22 +5,12 @@ FIRST_PLAYER_MOVE = 'X'
 SECOND_PLAYER_MOVE = 'O'
 BOARD_SIZE = 7
 
-class Group(models.Model):
-    name = models.CharField(max_length=200)
-    active = models.BooleanField()
-
-class Channel(models.Model):
-    group       = models.ForeignKey(Group, on_delete=models.CASCADE,  null=True)
-    name        = models.CharField(max_length=200)
-    is_x_player = models.BooleanField(default=True)
-
-
 class Game(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    active = models.BooleanField(default=True)
     start_time = models.DateTimeField(auto_now_add=True)
-    game_over =  models.BooleanField(default=False)
+    game_over = models.BooleanField(default=False)
     winner = models.CharField(max_length=1)
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL,  null=True)
-
 
     def getBoardState(self):
         board = [[None for x in range(BOARD_SIZE)] for y in range(BOARD_SIZE)]
@@ -28,10 +18,10 @@ class Game(models.Model):
             board[move.x][move.y] = FIRST_PLAYER_MOVE if move.is_x_player else SECOND_PLAYER_MOVE
         return board
 
-    """
-        Given x and Side, get Y
-    """
     def getYCoordinate(self, xMove, side):
+        """
+            Given x and Side, get Y
+        """
         board = self.getBoardState()
         for x, row in enumerate(board):
             if x == xMove:
@@ -49,10 +39,10 @@ class Game(models.Model):
     def validateLine(self, a, b, c, d):
         return a is not None and a == b and a == c and a == d
 
-    """
-    Validate Winner connect-4 rows, columns, slash
-    """
     def validateGame(self):
+        """
+        Validate Winner connect-4 rows, columns, slash
+        """
         board = self.getBoardState()
         # Horizonal validation
         for i in range(BOARD_SIZE):
@@ -88,14 +78,19 @@ class Game(models.Model):
                     self.save()
                     return
 
+class Channel(models.Model):
+    game        = models.ForeignKey(Game, on_delete=models.CASCADE, null=True)
+    name        = models.CharField(max_length=200)
+    is_x_player = models.BooleanField(default=True)
+
 
 class Move(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE)
     x = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(BOARD_SIZE - 1)])
     y =  models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(BOARD_SIZE - 1)])
     is_x_player = models.BooleanField()
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
 
 
 

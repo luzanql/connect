@@ -1,21 +1,19 @@
 import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from .models import Game, Move, Group, Channel
+from .models import Game, Move, Channel
 from django.db import IntegrityError
 
 
 FIRST_PLAYER = 'X'
 SECOND_PLAYER = 'O'
 class MoveConsumer(WebsocketConsumer):
-
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'connect_four_%s' % self.room_name
         self.player = self.scope['url_route']['kwargs']['player']
         # Join room group
         async_to_sync(self.channel_layer.group_add)(
-            self.room_group_name,
+            self.room_name,
             self.channel_name
         )
 
@@ -27,9 +25,8 @@ class MoveConsumer(WebsocketConsumer):
                 raise Exception
             is_x_player =  True if self.player == FIRST_PLAYER else False
 
-            group = Group.objects.get(name=self.room_group_name, active='True')
-            self.game = Game.objects.get(group=group)
-            channels_count = Channel.objects.filter(group=group).count()
+            self.game = Game.objects.get(name=self.room_name, active='True')
+            channels_count = Channel.objects.filter(game=self.game).count()
 
             if channels_count > 1:
                 print('The room is full')
@@ -38,23 +35,19 @@ class MoveConsumer(WebsocketConsumer):
 
             if channels_count == 1:
                 # Validate if player is already connected
-                channel = Channel.objects.get(group=group)
+                channel = Channel.objects.get(game=self.game)
                 if channel.is_x_player and is_x_player:
                     print(self.player + ' already connected')
                     self.close()
                     raise Exception
 
-            channel = Channel(name = self.channel_name, group=group, is_x_player=is_x_player)
+            channel = Channel(name=self.channel_name, game=self.game, is_x_player=is_x_player)
             channel.save()
 
-        except Group.DoesNotExist:
+        except Game.DoesNotExist:
             # Create group channel and game
-            group = Group(name=self.room_group_name, active=True)
-            group.save()
-            channel = Channel(name = self.channel_name, group=group, is_x_player=is_x_player)
-            channel.save()
-            self.game = Game(group=group)
-            self.game.save()
+            self.game = Game.objects.create(name=self.room_name, active=True)
+            self.channel = Channel.objects.create(name=self.channel_name, game=self.game, is_x_player=is_x_player)
         except Game.DoesNotExist:
             print("Game does not exist")
         except Exception:
@@ -63,16 +56,18 @@ class MoveConsumer(WebsocketConsumer):
         self.accept()
 
     def disconnect(self, close_code):
+        # Doesn't always get called
         # Leave room group
         print('Leave room group')
-        async_to_sync(self.channel_layer.group_discard)(
-            self.room_group_name,
+        async_to_sync(self.channel_layer.group_discard) (
+            self.room_name,
             self.channel_name
         )
-        # Delete Group if channel is part of a game, don't need conexion info
+        # Delete Group if channel is part of a game,
+        # We do not need persist channels and group info
         try:
             channel = Channel.objects.get(name=self.channel_name)
-            channel.group.delete()
+            channel.game.delete()
         except Channel.DoesNotExist:
             pass
 
@@ -80,7 +75,7 @@ class MoveConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
+            self.room_name,
             {
                 'type': 'game_move',
                 'message': text_data_json
@@ -95,7 +90,7 @@ class MoveConsumer(WebsocketConsumer):
             side        = text_data_json['side']
             is_x_player = bool(text_data_json['xIsPlayer'])
             column      = self.game.getYCoordinate(row, side)
-            move        = Move(x=row, y=column, is_x_player= is_x_player, game=self.game)
+            move        = Move(x=row, y=column, is_x_player=is_x_player, game=self.game)
             move.save()
             self.game.validateGame()
             self.send(text_data=json.dumps({
@@ -110,5 +105,18 @@ class MoveConsumer(WebsocketConsumer):
 
 
 
+class LobbyConsumer(WebsocketConsumer):
+    def connect(self):
+        self.accept()
+        print("New user entered lobby!")
 
-
+        self.send(text_data=json.dumps({
+            'games': {
+                game.id: {
+                    'name': game.name,
+                    'is_x_present': game.channel_set.filter(is_x_player=True).exists(),
+                    'is_o_present': game.channel_set.filter(is_x_player=False).exists(),
+                }
+                for game in Game.objects.all()
+            }
+        }))
