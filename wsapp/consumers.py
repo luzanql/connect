@@ -91,18 +91,22 @@ class MoveConsumer(WebsocketConsumer):
             row         = int(text_data_json['row'])
             column        = text_data_json['side']
             is_x_player = bool(text_data_json['xIsPlayer'])
-           # column      = self.game.getYCoordinate(row, side)
-
-            move        = Move(x=row, y=column, is_x_player=is_x_player, game=self.game)
-            move.save()
-            self.game.validateGame()
-            self.send(text_data=json.dumps({
-                'row'      : row,
-                'column'   : column,
-                'xIsNext'  : not is_x_player,
-                'winner'   : self.game.winner,
-                'gameOver' : self.game.game_over
-            }))
+            is_valid_move = self.game.isValidMove(row, column)
+            if (is_valid_move):
+                move        = Move(x=row, y=column, is_x_player=is_x_player, game=self.game)
+                move.save()
+                self.game.validateGame()
+                self.send(text_data=json.dumps({
+                    'row'      : row,
+                    'column'   : column,
+                    'xIsNext'  : not is_x_player,
+                    'winner'   : self.game.winner,
+                    'gameOver' : self.game.game_over
+                }))
+            else:
+                self.send(text_data=json.dumps({
+                    'errorMsg'      : 'Invalid Move',
+                }))
         except (ValueError, IntegrityError):
             print('Missing or Wrong data for movement')
 

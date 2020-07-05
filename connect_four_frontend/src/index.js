@@ -45,8 +45,10 @@ class Board extends React.Component {
         };
         this.client.onmessage = (message) => {
             const data = JSON.parse(message.data);
-            if (!this.state.gameOver) {
+            if (!this.state.gameOver && !data.errorMsg) {
                 this.makeMove(data.row, data.column, data.xIsNext, data.winner, data.gameOver);
+            } else {
+                alert(data.errorMsg)
             }
         };
     }

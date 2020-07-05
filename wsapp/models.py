@@ -18,23 +18,23 @@ class Game(models.Model):
             board[move.x][move.y] = FIRST_PLAYER_MOVE if move.is_x_player else SECOND_PLAYER_MOVE
         return board
 
-    def getYCoordinate(self, xMove, side):
-        """
-            Given x and Side, get Y
-        """
+    def isValidMove(self, row_move, col_move):
         board = self.getBoardState()
-        for x, row in enumerate(board):
-            if x == xMove:
-                if side == 'R':
-                    y = BOARD_SIZE - 1
-                    for elem in reversed(row):
-                        if (elem is None):
-                            return y
-                        y -= 1
-                if side == 'L':
-                    for y, elem in enumerate(row):
-                        if (elem is None):
-                            return y
+        for y, row in enumerate(board):
+                for x, col in enumerate(row):
+                    if y == row_move and x == col_move:
+                        if x == 0 or x == 6:
+                            if col is None:
+                                return True
+                            else:
+                                return False
+                        if col is None and row[x - 1] is not None:
+                            return True
+                        else:
+                            if col is None and row[x + 1] is not None:
+                                return True
+                            else:
+                                return False
 
     def validateLine(self, a, b, c, d):
         return a is not None and a == b and a == c and a == d
