@@ -3,15 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 const Square = (props) =>
-    <div className="col-1 square">
-        {props.value}
-    </div>
+        <button className="square"  onClick={() => props.onClick()} > {props.value}
+        </button>
 
 const Row = (props) =>
     <div className="row">
         {[...Array(props.squares.length)].map((x, j) =>
-            <Square key={j} value={props.squares[j]}></Square>)}
+            <Square key={j} value={props.squares[j]} onClick={() => props.onClick(props.row, j) } >
+            </Square>
+        )}
     </div>
+
 
 class Board extends React.Component {
     constructor(props) {
@@ -29,7 +31,9 @@ class Board extends React.Component {
         this.handleXChange = this.handleXChange.bind(this);
         this.handleMove = this.handleMove.bind(this);
         this.handleRadioButtonSide = this.handleRadioButtonSide.bind(this);
+        this.handleSquareClick = this.handleSquareClick.bind(this);
     }
+
     componentWillMount() {
         this.client = new WebSocket(
             `ws://127.0.0.1:8000/ws/game/${this.props.roomName}/${this.player}/`
@@ -48,7 +52,10 @@ class Board extends React.Component {
             }
         };
     }
-
+    handleSquareClick(row, column){
+        this.setState({xMove: column});
+        this.setState({side: row});
+    }
     handleXChange(event) {
         this.setState({xMove: event.target.value});
     }
@@ -92,6 +99,8 @@ class Board extends React.Component {
             <Row
                 key={i}
                 squares={this.state.boardState[i]}
+                row={i}
+                onClick={this.handleSquareClick}
             ></Row>
         )
     }
@@ -175,7 +184,7 @@ class Lobby extends React.Component {
         this.setState({newRoomName})
         return true
     }
-    
+
     handleEnterGame(roomName, player) {
         this.setState({ roomName, player })
         return true
