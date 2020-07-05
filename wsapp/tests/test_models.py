@@ -1,28 +1,21 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 from wsapp.models import Game, Move
 
-class TestMovements(SimpleTestCase):
+class TestMovements(TestCase):
 
     def setUp(self):
-        self.game = Game.objects.create(name='testing', active=True)
-        self.move1 = Move.objects.create(self.game, 0, 0, True)
-        self.move2 = Move.objects.create(self.game, 1, 0, True)
-        self.move3 = Move.objects.create(self.game, 2, 0, True)
-        self.move4 = Move.objects.create(self.game, 3, 0, True)
-        self.move5 = Move.objects.create(self.game, 4, 0, True)
-        self.move6 = Move.objects.create(self.game, 5, 0, True)
-        self.move7 = Move.objects.create(self.game, 6, 0, True)
+        self.game  = Game.objects.create(name='testing', active=True)
+        self.move1 = Move.objects.create(game=self.game, x=0, y=0, is_x_player=True)
+        self.move2 = Move.objects.create(game=self.game, x=1, y=0, is_x_player=True)
+        self.move3 = Move.objects.create(game=self.game, x=2, y=0, is_x_player=True)
+        self.move4 = Move.objects.create(game=self.game, x=3, y=0, is_x_player=True)
+        self.move5 = Move.objects.create(game=self.game, x=4, y=0, is_x_player=True)
+        self.move6 = Move.objects.create(game=self.game, x=5, y=0, is_x_player=True)
+        self.move7 = Move.objects.create(game=self.game, x=6, y=0, is_x_player=True)
+
 
     def tearDown(self):
         del self.game
-        del self.move1
-        del self.move2
-        del self.move3
-        del self.move4
-        del self.move5
-        del self.move6
-        del self.move7
-
 
     def test_is_valid_when_valid_move(self):
         valid_moves = [
@@ -42,7 +35,7 @@ class TestMovements(SimpleTestCase):
             (6,6)
         ]
         for move in valid_moves:
-            self.assertTrue(self.game.is_valid(*move))
+            self.assertTrue(self.game.isValidMove(*move))
 
     def test_is_valid_when_invalid_move(self):
         invalid_moves = [
@@ -60,5 +53,5 @@ class TestMovements(SimpleTestCase):
             (6,5)
         ]
         for move in invalid_moves:
-            self.assertFalse(self.game.is_valid(*move))
+            self.assertFalse(self.game.isValidMove(*move))
 
