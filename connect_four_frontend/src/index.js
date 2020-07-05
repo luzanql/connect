@@ -28,10 +28,8 @@ class Board extends React.Component {
         };
         this.client = null;
         this.player = props.player;
-        this.handleXChange = this.handleXChange.bind(this);
-        this.handleMove = this.handleMove.bind(this);
-        this.handleRadioButtonSide = this.handleRadioButtonSide.bind(this);
         this.handleSquareClick = this.handleSquareClick.bind(this);
+        this.sendMove = this.sendMove.bind(this);
     }
 
     componentWillMount() {
@@ -52,31 +50,28 @@ class Board extends React.Component {
             }
         };
     }
-    handleSquareClick(row, column){
-        this.setState({xMove: column});
-        this.setState({side: row});
+    handleSquareClick(row, column) {
+
+        this.updateState(row, column);
+        this.sendMove(row, column);
     }
-    handleXChange(event) {
-        this.setState({xMove: event.target.value});
+    updateState(row, column) {
+        this.setState({
+            xMove: column,
+            side: row,
+        })
+        return true;
     }
 
-    handleYChange(event) {
-        this.setState({side: event.target.value});
-    }
-
-    handleMove(event) {
+    sendMove(row, column) {
         let currPlayer = this.state.xIsNext ? 'X' : 'O';
         if (this.player === currPlayer) {
             this.client.send(JSON.stringify({
-                'row': this.state.xMove,
-                'side': this.state.side,
+                'row': row,
+                'side': column,
                 'xIsPlayer': this.state.xIsNext
             }));
         }
-    }
-
-    handleRadioButtonSide(event) {
-        this.setState({side: event.target.value});
     }
 
     makeMove(row, column, xIsNext, winner, gameOver) {
@@ -118,28 +113,6 @@ class Board extends React.Component {
                 <div className="status">{status}</div>
                 <div className="row">
                     <div className="col-xs-12 col-sm-12 col-md-6 col-lg-6">{this.renderBoard()}</div>
-                </div>
-                <div className="row">
-                    <div className="col-lg-6 col-md-6 col-xs-12">
-                        <div className="row">
-                            <div className="col-2"><span className="my-span">Row:</span>
-                                <input type="text" className="form-control" onChange={this.handleXChange}/>
-                            </div>
-                            <div className="col-2">
-                                <span className="my-span">Left:</span>
-                                <input type="radio" value="L" name="side"  onChange={this.handleRadioButtonSide}/>
-                            </div>
-                            <div className="col-2">
-                                <span className="my-span">Right:</span>
-                                <input type="radio"  value="R" name="side" onChange={this.handleRadioButtonSide}/>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="row">
-                    <div className="col-12">
-                        <button className="btn btn-primary custom-btn" onClick={this.handleMove}>Make move</button>
-                    </div>
                 </div>
             </div>
         )

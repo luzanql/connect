@@ -85,11 +85,14 @@ class MoveConsumer(WebsocketConsumer):
     # Receive movement from room group
     def game_move(self, event):
         text_data_json = event['message']
+        #game.validateMove(x, y)
+        print(text_data_json)
         try:
-            row         = int(text_data_json['row']) - 1
-            side        = text_data_json['side']
+            row         = int(text_data_json['row'])
+            column        = text_data_json['side']
             is_x_player = bool(text_data_json['xIsPlayer'])
-            column      = self.game.getYCoordinate(row, side)
+           # column      = self.game.getYCoordinate(row, side)
+
             move        = Move(x=row, y=column, is_x_player=is_x_player, game=self.game)
             move.save()
             self.game.validateGame()
